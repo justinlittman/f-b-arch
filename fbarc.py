@@ -141,6 +141,10 @@ def main():
     elif args.command == 'url':
         fb = Fbarc()
         print(fb.generate_url(args.node, args.node_type_definition, escape=args.escape))
+    elif args.command == 'search':
+        app_id, app_secret = load_keys(args)
+        fb = Fbarc(app_id=app_id, app_secret=app_secret)
+        print_graph(fb.search(args.node_type, args.query))
     else:
         # Load keys
         app_id, app_secret = load_keys(args)
@@ -218,6 +222,10 @@ def get_argparser():
     url_parser.add_argument('--escape', action='store_true', help='escape the characters in the url')
 
     subparsers.add_parser('configure', help='input API credentials and store in configuration file')
+
+    search_parser = subparsers.add_parser('search', help='search for resources of a particular type from the Graph API')
+    search_parser.add_argument('node_type', choices=['user', 'page', 'event', 'group', 'place', 'placetopic'])
+    search_parser.add_argument('query')
 
     return parser
 
@@ -344,6 +352,13 @@ class Fbarc(object):
         Look up the type of a node.
         """
         return self.get_metadata(node_id)['metadata']['type']
+
+    def search(self, node_type, q):
+        """
+        Search.
+        """
+        return self._perform_http_get(self._prepare_url('search'),
+                params={'type': node_type, 'q': q})
 
     def _prepare_request(self, node_id, node_type_definition_name):
         """
